@@ -225,6 +225,8 @@ from rdkit.Chem import ChemicalForceFields
 # atom    214    99 MG+2       "MAGNESIUM(+2) CATION"     12      24.305    0
 ###############################################################################
 
+#===========================
+
 def getMMFF_large_atom_type(mmff_props , atom, m):
   # Small to large numbers
   small_to_large_list = [[[]],
@@ -338,11 +340,6 @@ def getMMFF_large_atom_type(mmff_props , atom, m):
           MMFF_large_atom_type = atom_info[0]
   return MMFF_large_atom_type
 
-
-
-
-
-
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -352,8 +349,9 @@ def getMMFF_large_atom_type(mmff_props , atom, m):
 ###############################################################################
 #
 
-def main(sdf_file):
+#===========================
 
+def main(sdf_file):
     # Tinker xyz format
     # number of atoms, title
     # number, element symbol, x, y, z, MMFF atom type, connectivity
@@ -361,30 +359,20 @@ def main(sdf_file):
     #print(sys.argv)
     # smi_string=Chem.MolToSmiles(m)
     # print(smi_string)
-
     conf = m.GetConformer()
     mmff_props = AllChem.MMFFGetMoleculeProperties(m)
-
     xyz = open(sdf_file + ".xyz", "w+")
-
     xyz.write("{:>6}  {}\n".format(m.GetNumAtoms(),sdf_file))
-
     for atom in m.GetAtoms():
-
         bond_list = []
         attached_atoms = ""
         bond_type = []
         connection_type = []
-
         for connection in atom.GetNeighbors():
             bond_list.append(connection.GetIdx()+1)
         bond_list.sort()
-
         for connection in bond_list:
             attached_atoms += "{:>5}".format(str(connection))+" "
-
-
-
         xyz.write("{:>6} {:>2} {:13.6f} {:11.6f} {:11.6f} {:>5} {}\n".format(
         atom.GetIdx()+1,
         atom.GetSymbol(),
@@ -396,4 +384,5 @@ def main(sdf_file):
 
     xyz.close()
 
+#===========================
 

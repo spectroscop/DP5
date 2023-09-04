@@ -11,12 +11,109 @@ distributed under MIT license
 ===============================================================
 
 CONTENTS
+0) ZERO
 1) Release Notes
 2) Requirements and Setup
 3) Usage
 4) NMR Description Format
 5) Included Utilites
 6) Code Organization
+
+===============================================================
+ZERO
+
+sudo apt install -y python3-pip
+sudo apt install build-essential libssl-dev libffi-dev python3-dev
+
+sudo apt install -y python3-virtualenv python3-virtualenv-clone python3-virtualenvwrapper virtualenvwrapper virtualenvwrapper-doc
+
+$ which python3
+$ cd ~/vProgramm
+$ virtualenv -p python3 /path/to/vProgramm
+or
+$ virtualenv -p python3 vProgramm
+
+$ source vProgramm/bin/activate
+$ deactivate
+
+Deleting your virtual environment
+
+$ rm -rf /path/to/vProgramm
+
+===============
+sudo apt install -y python3-pip
+sudo apt install build-essential libssl-dev libffi-dev python3-dev
+sudo apt install -y python3-virtualenv python3-virtualenv-clone python3-virtualenvwrapper virtualenvwrapper virtualenvwrapper-doc
+mkdir -p ~/virt
+cd ~/virt
+virtualenv -p python3 ~/virt/vDP5
+cd vDP5/
+source vDP5/bin/activate
+deactivate
+
+==============
+NWChem
+
+sudo apt -y install  nwchem python3-dev gfortran  mpi-default-bin mpi-default-dev ssh
+ldd /usr/bin/nwchem | grep libmpi
+# number of nodes
+export OMP_NUM_THREADS=1
+mpirun -np 2 nwchem input2.in > output2.out 
+
+==============
+Tinker
+
+sudo apt install cmake gfortran fftw3
+cmake ../cmake
+make -j4
+sudo make install
+
+============================
+openbabel
+
+sudo apt install swig libxml2-dev libcairo-script-interpreter2 libglib2.0-dev-bin libpng-tools libpng-dev libcairo-5c0 
+sudo apt install cairo-5c libcairo-5c-dev libboost1.74-all-dev libboost-all-dev libeigen3-dev libwxgtk3.0-gtk3-dev libcoordgen-dev
+
+cmake .. -DBUILD_GUI=ON -DPYTHON_BINDINGS=ON -DRUN_SWIG=ON
+make -j4
+make test
+sudo make install
+
+=================
+
+sudo apt-get install libblas-dev liblapack-dev
+
+source vDP5/bin/activate
+
+python -m pip install -U pip
+python -m pip install setuptools==59.8
+python -m pip install numpy==1.22.4
+
+python -m pip install -U matplotlib
+python -m pip install -U scipy
+python -m pip install -U lmfit
+python -m pip install -U qml
+python -m pip install -U PyQt5
+python -m pip install -U pathos
+python -m pip install -U statsmodels
+python -m pip install -U cython
+python -m pip install -U tk
+python -m pip install -U nmrglue
+python -m pip install -U openbabel
+python -m pip install -U rdkit
+
+\\\\\\\ Hepy error \\\\\\\\\\\\\\\\
+
+obabel -h -imol structure.mol -osdf -O~/test/mol.sdf
+source ~/virt/vDP5/bin/activate
+cd ~/virt/vDP5/DP5/
+python PyDP4.py --OutputFolder ~/test/DP5/  ~/test/mol ~/test/Brucker/
+deactivate
+
+obgen -ff UFF structure.sdf > structure1.sdf
+obminimize -newton -ff UFF -o sdf  structure1.sdf > structure2.sdf
+obabel -h -isdf structure2.sdf -oxyz -Ostructure.xyz
+obabel -inwo methane.nwout -oxyz -O methane.xyz
 
 ===============================================================
 

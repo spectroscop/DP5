@@ -2,10 +2,11 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 import os
 import shutil
+#from dp5 import PyDP4
 import PyDP4
 import queue
 import sys
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 import numpy as np
@@ -938,7 +939,7 @@ class CalculationTab(QtWidgets.QWidget):
 
     def get_current_values(self):
 
-        import PyDP4
+        # from dp5 import PyDP4
         import datetime
         import getpass
 
@@ -2666,6 +2667,10 @@ my_receiver.moveToThread(thread)
 thread.started.connect(my_receiver.run)
 thread.start()
 
-sys.exit(app.exec_())
+
+def run():
+    sys.exit(app.exec_())
 
 
+if __name__ == "__main__":
+    run()

@@ -18,13 +18,12 @@ import PyDP4
 # Please modify the line below to give the path to the TINKER v8.x top level folder
 # This folder should contain bin/scan and params/mmff.prm for the process to work
 
-def SetupTinker(settings):
+#=================================
 
+def SetupTinker(settings):
     TinkerInputs = []
     for inpfi in settings.InputFiles:
-
         inpf = inpfi.split('.')[0]
-
         if settings.Rot5Cycle is True:
             if not os.path.exists(inpf+'rot.sdf'):
                 import FiveConf
@@ -52,29 +51,27 @@ def SetupTinker(settings):
             f.close()
 
         scriptdir = getScriptPath()
-        #convinp = scriptdir + '/sdf2tinkerxyz -k ' + scriptdir + '/default.key <'
+        #convinp = scriptdir + '/data/sdf2tinkerxyz -k ' + scriptdir + '/data/default.key <'
         #outp = subprocess.check_output(convinp + inpf + '.sdf', shell=True)
 
         import sdftinkerxyzpy
 
         convinp = sdftinkerxyzpy.main(inpf)
-
         #f = open(inpf + '.key', 'w+')
         #key = f.readlines()
         #key[2] = 'PARAMETERS        ' + settings.TinkerPath + 'params/mmff.prm\n'
         #f.seek(0)
         #f.writelines(key)
         #f.close()
-
         TinkerInputs.append(inpf)
         print("Tinker input for " + inpf + " prepared.")
-
         if settings.Rot5Cycle is True:
-            outp = subprocess.check_output(convinp + inpf + 'rot.sdf',
-                                           shell=True)
+            outp = subprocess.check_output(convinp + inpf + 'rot.sdf', shell=True)
             print("Tinker input for " + inpf + "rot prepared.")
 
     return TinkerInputs
+
+#=================================
 
 def RunTinker(TinkerInputs, settings):
     #Run Tinker scan for all diastereomeric inputs
@@ -83,7 +80,6 @@ def RunTinker(TinkerInputs, settings):
     if shutil.which(TinkerPrefix) is None:
         print('Tinker.py, RunTinker:\n  Could not find Tinker scan executable at ' + TinkerPrefix)
         quit()
-
     NCompleted = 0
 
     for isomer in TinkerInputs:
@@ -92,24 +88,27 @@ def RunTinker(TinkerInputs, settings):
             TinkerOutputs.append(isomer)
             continue
 
-        print(settings.TinkerPath + '/bin/scan ' + isomer +' '+settings.TinkerPath + '/params/mmff.prm 0 10 20 0.00001 | tee ./' + isomer + \
-            '.tout')
-        outp = subprocess.check_output(settings.TinkerPath + '/bin/scan ' + isomer +' '+settings.TinkerPath+'/params/mmff.prm'+
-            ' 0 10 20 0.00001 | tee ./' + isomer + '.tout', shell=True)
+#        print(settings.TinkerPath + '/bin/scan ' + isomer +' '+settings.TinkerPath + '/params/mmff.prm 0 10 20 0.00001 | tee ./' + isomer + '.tout')
+        print(settings.TinkerPath + '/bin/scan ' + isomer +' '+settings.TinkerPath + '/params/mmff.prm 0 10 20 0.00001 | tee ' + isomer + '.tout')
+#        outp = subprocess.check_output(settings.TinkerPath + '/bin/scan ' + isomer +' '+settings.TinkerPath+'/params/mmff.prm'+
+#            ' 0 10 20 0.00001 | tee ./' + isomer + '.tout', shell=True)
+        outp = subprocess.check_output(settings.TinkerPath + '/bin/scan ' + isomer +' '+settings.TinkerPath+'/params/mmff.prm'+ ' 0 10 20 0.00001 | tee ' + isomer + '.tout', shell=True)
         NCompleted = NCompleted + 1
         TinkerOutputs.append(isomer)
-        print("Tinker job " + str(NCompleted) + " of " + str(len(TinkerInputs)) + \
-            " completed.")
+        print("Tinker job " + str(NCompleted) + " of " + str(len(TinkerInputs)) + " completed.")
 
         if settings.Rot5Cycle is True:
-            print(settings.TinkerPath + '/bin/scan ' + isomer + 'rot '+settings.TinkerPath+'/params/mmff.prm 0 10 20 0.00001 | tee ./' + \
-                isomer + 'rot.tout')
-            outp = subprocess.check_output(settings.TinkerPath + '/bin/scan ' + isomer +
-                'rot '+settings.TinkerPath+'/params/mmff.prm 0 10 20 0.00001 | tee ./' + isomer + 'rot.tout', shell=True)
+#            print(settings.TinkerPath + '/bin/scan ' + isomer + 'rot '+settings.TinkerPath+'/params/mmff.prm 0 10 20 0.00001 | tee ./' + \
+#                isomer + 'rot.tout')
+            print(settings.TinkerPath + '/bin/scan ' + isomer + 'rot '+settings.TinkerPath+'/params/mmff.prm 0 10 20 0.00001 | tee ' + isomer + 'rot.tout')
+#            outp = subprocess.check_output(settings.TinkerPath + '/bin/scan ' + isomer +
+#                'rot '+settings.TinkerPath+'/params/mmff.prm 0 10 20 0.00001 | tee ./' + isomer + 'rot.tout', shell=True)
+            outp = subprocess.check_output(settings.TinkerPath + '/bin/scan ' + isomer + 'rot '+settings.TinkerPath+'/params/mmff.prm 0 10 20 0.00001 | tee ' + isomer + 'rot.tout', shell=True)
             NCompleted = NCompleted + 1
 
     return TinkerOutputs
 
+#=================================
 
 def ReadConformers(TinkerOutputs, Isomers, settings):
     atypes, anums = ExtractAtomTypes(settings)
@@ -127,6 +126,7 @@ def ReadConformers(TinkerOutputs, Isomers, settings):
                 print(outp + ' ' + iso.BaseName + ' Nope')
     return Isomers
 
+#=================================
 
 #Reads force field parameter file to understand atom notation in the output
 def ExtractAtomTypes(settings):
@@ -140,6 +140,8 @@ def ExtractAtomTypes(settings):
                 atomtypes.append(data[3])
                 atomnums.append(int(data[-3]))
     return atomtypes, atomnums
+
+#=================================
 
 #Reads the relevant tinker geometry files
 #v0.2 - reads seperate rot file as well
@@ -181,6 +183,7 @@ def ReadTinker(TinkerOutput, settings, atypes, anums):
 
     return atoms, filtered, charge, AbsEs
 
+#=================================
 
 # Reads all conformers from the arc file
 def ReadArc(f, atypes, anums):
@@ -204,6 +207,7 @@ def ReadArc(f, atypes, anums):
 
     return atoms, conformers
 
+#=================================
 
 # Get energies of conformers from tinker output file
 def GetEnergiesCharge(TinkerOutput, settings):
@@ -234,6 +238,7 @@ def GetEnergiesCharge(TinkerOutput, settings):
     else:
         return energies, settings.charge
 
+#=================================
 
 def GetAtomSymbol(AtomNum):
     Lookup = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', \
@@ -250,6 +255,7 @@ def GetAtomSymbol(AtomNum):
         print("No such element with atomic number " + str(AtomNum))
         return 0
 
+#=================================
 
 def GetInchiCharge(inchifile):
 
@@ -274,9 +280,11 @@ def GetInchiCharge(inchifile):
 
     return charge
 
+#=================================
 
 def GetSDFCharge(sdf):
-    import openbabel
+#    import openbabel
+    from openbabel import openbabel
 
     obconversion = openbabel.OBConversion()
     obconversion.SetInFormat("sdf")
@@ -285,6 +293,10 @@ def GetSDFCharge(sdf):
 
     return obmol.GetTotalCharge()
 
+#=================================
 
 def getScriptPath():
     return os.path.dirname(os.path.realpath(sys.argv[0]))
+
+#=================================
+

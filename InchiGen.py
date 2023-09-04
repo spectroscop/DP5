@@ -22,23 +22,20 @@ import subprocess
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
+#=====================
+
 def main(f):
-
     inchi, aux = GetInchi(f)
-
     ds_inchis = GenDiastereomers(inchi)
     ds_inchis = [FixTautProtons(f, i, aux) for i in ds_inchis]
-
     for ds in range(0, len(ds_inchis)):
-
         print("Isomer " + str(ds) + " inchi = " + ds_inchis[ds])
-
-        Inchi2Struct(ds_inchis[ds], f[:-4] + str(ds+1), aux)
+        Inchi2Struct(OutputFolder, ds_inchis[ds], f[:-4] + str(ds+1), aux)
         RestoreNumsSDF(f[:-4] + str(ds+1) + '.sdf', f, aux)
 
+#=====================
 
 def GetInchiRenumMap(AuxInfo):
-
     for l in AuxInfo.split('/'):
         if 'N:' in l:
             RenumLayer = l
@@ -46,9 +43,9 @@ def GetInchiRenumMap(AuxInfo):
     amap = [int(x) for x in RenumLayer[2:].split(',')]
     return amap
 
+#=====================
 
 def FixTautProtons(f, inchi, AuxInfo):
-
     #Get tautomeric protons and atoms they are connected to from Inchi
     TautProts = GetTautProtons(inchi)
     amap = GetInchiRenumMap(AuxInfo)
@@ -82,11 +79,10 @@ def FixTautProtons(f, inchi, AuxInfo):
             fixedlayer = fixedlayer + str(h[0])+'H,'
         else:
             fixedlayer = fixedlayer + str(h[0])+'H' + str(h[1]) + ','
-
     resinchi = inchi + fixedlayer[:-1]
-
     return resinchi
 
+#=====================
 
 #Get H connections from sdf file
 def GetHcons(f):
@@ -103,9 +99,9 @@ def GetHcons(f):
                 Hcons.append([idx, NbrAtom.GetIdx()])
     return Hcons
 
+#=====================
 
 def RestoreNumsSDF(f, fold, AuxInfo):
-
     #Read molecule from file
     obconversion = OBConversion()
     obconversion.SetInFormat("sdf")
@@ -161,49 +157,37 @@ def RestoreNumsSDF(f, fold, AuxInfo):
     obconversion.SetOutFormat("sdf")
     obconversion.WriteFile(newmol, f)
 
+#=====================
 
 def GetInchi(f):
-
     print("Getting inchi from file ",f)
-
     if os.path.sep not in f:
         f = os.path.join(os.getcwd(), f)
-
     m = Chem.MolFromMolFile(f, removeHs = False)
-
     m = Chem.AddHs(m)
-
     idata = Chem.MolToInchiAndAuxInfo(m)
-
     return idata[0], idata[1]
 
+#=====================
 
-def Inchi2Struct(inchi, f, aux):
-
-
+def Inchi2Struct(OutputFolder, inchi, f, aux):
     cwd = os.getcwd()
-    fullf = os.path.join(cwd, f)
-    infile = open(f + '.inchi', 'w')
+    fullf = os.path.join(OutputFolder, f)
+    infile = open(fullf + '.inchi', 'w')
     infile.write(inchi)
     infile.close()
-
-    inchi = open(f + '.inchi', "r").read()
-
+    inchi = open(fullf + '.inchi', "r").read()
     m = AllChem.inchi.MolFromInchi(inchi, sanitize=True, removeHs=False)
-
     m = AllChem.AddHs(m, addCoords=True)
-
     AllChem.EmbedMolecule(m)
-
     save3d = Chem.SDWriter(fullf + '.sdf')
-
     save3d.write(m)
 
+#=====================
 
 def GetTautProtons(inchi):
     #get the tautomer layer and pickup the data
     layers = inchi.split('/')
-
     for l in layers:
         if 'h' in l:
             ProtLayer = l
@@ -221,36 +205,32 @@ def GetTautProtons(inchi):
 
     return TautProts
 
+#=====================
 
-def GenSelectDiastereomers(structf, atoms):
-
+def GenSelectDiastereomers(OutputFolder, structf, atoms):
     f = structf
-
     if (f[-4:] != '.sdf'):
         f += '.sdf'
-
     inchi, aux = GetInchi(f)
     amap = GetInchiRenumMap(aux)
-
     translated_atoms = []
     for atom in atoms:
         translated_atoms.append(amap.index(atom)+1)
-
     ds_inchis = GenSelectDSInchis(inchi, translated_atoms)
     ds_inchis = [FixTautProtons(f, i, aux) for i in ds_inchis]
     filenames = []
     for ds in range(0, len(ds_inchis)):
-        Inchi2Struct(ds_inchis[ds], f[:-4] + str(ds + 1), aux)
+        Inchi2Struct(OutputFolder, ds_inchis[ds], f[:-4] + str(ds + 1), aux)
         RestoreNumsSDF(f[:-4] + str(ds + 1) + '.sdf', f, aux)
-        filenames.append(f[:-4] + str(ds + 1))
+        filenames.append(f[:-4] + str(ds + 1) + '.sdf')
 
     return filenames
 
+#=====================
 
 def GenSelectDSInchis(inchi, atoms):
     #Inchis of all diastereomers, including the parent structure
     resinchis = []
-
     #get the number of potential diastereomers
     layers = inchi.decode().split('/')
     for l in layers:
@@ -298,67 +278,22 @@ def GenSelectDSInchis(inchi, atoms):
         resinchis.append(inchi.replace(slayer, layer))
     return resinchis
 
-
-def GenDiastereomers(structf, nS, atoms=[]):
-    if len(atoms) > 0:
-        return GenSelectDiastereomers(structf, atoms)
-
-    f = structf
-
-    if (f[-4:] != '.sdf'):
-        f += '.sdf'
-
-    if nS < 2:
-        cwd = os.getcwd()
-
-        fullf = os.path.join(cwd, f)
-
-        shutil.copy(fullf, fullf[:-4] + "0.sdf")
-
-        return [f[:-4] + "0"]
-
-    inchi, aux = GetInchi(f)
-
-
-    i,a = GetInchi(f)
-
-    ds_inchis = GenDSInchis(inchi)
-
-
-    ds_inchis = [FixTautProtons(f, i, aux) for i in ds_inchis]
-    filenames = []
-
-    for ds in range(0, len(ds_inchis)):
-
-        print("Isomer " + str(ds) + " inchi = " + ds_inchis[ds])
-
-        Inchi2Struct(ds_inchis[ds], f[:-4] + str(ds + 1), aux)
-        RestoreNumsSDF(f[:-4] + str(ds + 1) + '.sdf', f, aux)
-        filenames.append(f[:-4] + str(ds + 1))
-
-    return filenames
-
+#=====================
 
 def GenDSInchis(inchi):
-
     ilist = list(inchi)
     #Inchis of all diastereomers, including the parent structure
     resinchis = []
-
     #get the number of potential diastereomers
     numds = 0
     layers = inchi.split('/')
     for l in layers:
         if 't' in l:
             numds = 2**(len(l.translate({ord(i): None for i in 't,1234567890'}))-1)
-
     if numds == 0:
-
         raise ValueError("No chiral carbon detected in the input molecule!")
-
     else:
         print("Number of diastereomers to be generated: " + str(numds))
-
     #find configuration sites (+ and -)
     bs = ilist.index('t')
     es = ilist[bs:].index('/')
@@ -366,7 +301,6 @@ def GenDSInchis(inchi):
     for s in range(bs, bs+es):
         if ilist[s] == '+' or ilist[s] == '-':
             spos.append(s)
-
     temps = []
     #Generate inversion patterns - essentially just binary strings
     for i in range(0, numds):
@@ -385,3 +319,36 @@ def GenDSInchis(inchi):
         resinchis.append(''.join(t))
 
     return resinchis
+
+#=====================
+
+def GenDiastereomers(OutputFolder, structf, nS, atoms=[]):
+    if len(atoms) > 0:
+        return GenSelectDiastereomers(structf, atoms)
+    f = structf
+    if (f[-4:] != '.sdf'):
+        f += '.sdf'
+    if nS < 2:
+        cwd = os.getcwd()
+        fullf = os.path.join(OutputFolder+'/', os.path.basename(f))
+        shutil.copy(f, fullf[:-4] + "0.sdf")
+        return [fullf[:-4] + "0.sdf"]
+
+#    print (OutputFolder)
+#    print (fullf)
+#    quit ()
+
+    inchi, aux = GetInchi(f)
+    i,a = GetInchi(f)
+    ds_inchis = GenDSInchis(inchi)
+    ds_inchis = [FixTautProtons(f, i, aux) for i in ds_inchis]
+    filenames = []
+    for ds in range(0, len(ds_inchis)):
+        print("Isomer " + str(ds) + " inchi = " + ds_inchis[ds])
+        Inchi2Struct(OutputFolder, ds_inchis[ds], f[:-4] + str(ds + 1), aux)
+        RestoreNumsSDF(OutputFolder, f[:-4] + str(ds + 1) + '.sdf', f, aux)
+        filenames.append(f[:-4] + str(ds + 1) + '.sdf')
+    return filenames
+
+#=====================
+

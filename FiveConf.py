@@ -16,6 +16,8 @@ try:
 except ImportError:
     from openbabel import *
 
+#===========================
+
 def main(f, settings):
 
     """
@@ -27,9 +29,7 @@ def main(f, settings):
     obconversion = OBConversion()
     obconversion.SetInFormat("sdf")
     obmol = OBMol()
-
     obconversion.ReadFile(obmol, f)
-
     obmol.ConnectTheDots()
 
     #Find the atoms composing furan ring
@@ -100,6 +100,7 @@ def main(f, settings):
     obconversion.SetOutFormat("sdf")
     obconversion.WriteFile(obmol, f[:-4] + 'rot.sdf')
 
+#===========================
 
 #Recursively finds all the atoms connected to the input
 def FindSubstAtoms(atom, outAtom, al):
@@ -112,10 +113,10 @@ def FindSubstAtoms(atom, outAtom, al):
             al.append(NbrAtom)
             FindSubstAtoms(NbrAtom, outAtom, al)
 
+#===========================
 
 #Rotate atom around and axis by an angle
 def RotateAtom(atom, AxisAtom1, AxisAtom2, angle):
-
     [u, v, w] = GetUnitVector(AxisAtom1, AxisAtom2)
     [x, y, z] = [atom.x(), atom.y(), atom.z()]
     [a, b, c] = [(AxisAtom1.x()+AxisAtom1.x())/2, (AxisAtom1.y()+AxisAtom1.y())/2,\
@@ -130,6 +131,7 @@ def RotateAtom(atom, AxisAtom1, AxisAtom2, angle):
     
     atom.SetVector(X, Y, Z)
 
+#===========================
 
 def GetUnitVector(Atom1, Atom2):
     vector = []
@@ -141,27 +143,27 @@ def GetUnitVector(Atom1, Atom2):
     return [x/length for x in vector]
 
 
+#===========================
+
 #Finds the angle by which atoms need to be rotated by taking the angle
 #the atom is out of the plane (the 2 neighbor atoms being the axis)
 #and doubling it
 def FindRotAngle(AxisAtom1, AxisAtom2, OutAtom, Normal):
-
     start = []
     start.append((AxisAtom1.x() + AxisAtom2.x())/2)
     start.append((AxisAtom1.y() + AxisAtom2.y())/2)
     start.append((AxisAtom1.z() + AxisAtom2.z())/2)
-
     vector = []
     vector.append(OutAtom.x() - start[0])
     vector.append(OutAtom.y() - start[1])
     vector.append(OutAtom.z() - start[2])
-
     #Angle between plane normal and OOP atom
     vangle = angle(vector, Normal)
 
     #print "Measured angle: " + str(vangle*57.3)
     return vangle
 
+#===========================
 
 def crossproduct(v1, v2):
     product = [0, 0, 0]
@@ -170,32 +172,32 @@ def crossproduct(v1, v2):
     product[2] = v1[0]*v2[1]-v1[1]*v2[0]
     return product
 
+#===========================
 
 def dotproduct(v1, v2):
         return sum((a*b) for a, b in zip(v1, v2))
 
+#===========================
 
 def length(v):
     return sqrt(dotproduct(v, v))
 
+#===========================
 
 def angle(v1, v2):
     return acos(dotproduct(v1, v2) / (length(v1) * length(v2)))
 
+#===========================
 
 """Finds planes for every 3 atoms, calculates distances to the plane
 for the other 2 atoms andchoose the plane with the smallest smallest distance
 """
 def FindFuranPlane(mol, furan):
-
     atomIds = furan._path
     atoms = []
-
     for i in atomIds:
         atoms.append(mol.GetAtom(i))
-
     MinError = 100.0
-
     for atom in atoms:
         pats = [a for a in atoms if a != atom]
         norm, d, error = LstSqPlane(pats[0], pats[1], pats[2], pats[3])
@@ -207,35 +209,32 @@ def FindFuranPlane(mol, furan):
 
     return MaxNorm, MaxD, OutAtom
 
+#===========================
 
 #Given 3 atoms, finds a plane defined by a normal vector and d
 def FindPlane(atom1, atom2, atom3):
-
-    vector1 = [atom2.x() - atom1.x(), atom2.y() - atom1.y(),
-               atom2.z() - atom1.z()]
-    vector2 = [atom3.x() - atom1.x(), atom3.y() - atom1.y(),
-               atom3.z() - atom1.z()]
+    vector1 = [atom2.x() - atom1.x(), atom2.y() - atom1.y(), atom2.z() - atom1.z()]
+    vector2 = [atom3.x() - atom1.x(), atom3.y() - atom1.y(), atom3.z() - atom1.z()]
     cross_product = [vector1[1] * vector2[2] - vector1[2] * vector2[1],
                      -1 * vector1[0] * vector2[2] + vector1[2] * vector2[0],
                      vector1[0] * vector2[1] - vector1[1] * vector2[0]]
 
-    d = cross_product[0] * atom1.x() - cross_product[1] * atom1.y() + \
-        cross_product[2] * atom1.z()
+    d = cross_product[0] * atom1.x() - cross_product[1] * atom1.y() + cross_product[2] * atom1.z()
 
     return cross_product, d
 
+#===========================
 
 def LstSqPlane(atom1, atom2, atom3, atom4):
-
     # Inital guess of the plane
     [a0, b0, c0], d0 = FindPlane(atom1, atom2, atom3)
-
     f = lambda a: PlaneError([atom1, atom2, atom3, atom4], a[0], a[1], a[2], a[3])
     res = sciopt.minimize(f, (a0, b0, c0, d0), method='nelder-mead')
     plane = list(res.x)
 
     return plane[:3], plane[3], f(plane)
 
+#===========================
 
 def PlaneError(atoms, a, b, c, d):
     dists = []
@@ -243,12 +242,11 @@ def PlaneError(atoms, a, b, c, d):
         dists.append(abs(PointPlaneDist([a, b, c], d, atom)))
     return sum(dists)/len(dists)
 
+#===========================
 
 #Calculates distance from an atom to a plane
 def PointPlaneDist(norm, d, atom):
-
     point = []
-
     point.append(atom.x())
     point.append(atom.y())
     point.append(atom.z())
@@ -257,3 +255,6 @@ def PointPlaneDist(norm, d, atom):
     b = sqrt(norm[0]**2 + norm[1]**2 + norm[2]**2)
 
     return a/b
+
+#===========================
+
